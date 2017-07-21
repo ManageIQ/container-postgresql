@@ -12,6 +12,19 @@ function set_miq_role() {
   psql --command "ALTER ROLE \"${POSTGRESQL_USER}\" SUPERUSER LOGIN PASSWORD '${POSTGRESQL_PASSWORD}';"
 }
 
+# Include MIQ config overrides if directory present
+function include_miq_config() {
+  POSTGRESQL_CONFIG_DIR=${POSTGRESQL_CONFIG_DIR:-/etc/manageiq/postgresql.conf.d}
+  if [ -d "${POSTGRESQL_CONFIG_DIR}" ]; then
+    cat >> "$PGDATA/postgresql.conf" <<EOF
+# Begin ManageIQ configuration overrides:
+include_dir '${POSTGRESQL_CONFIG_DIR}'
+EOF
+  else
+    echo "${POSTGRESQL_CONFIG_DIR} directory not found, skipping config overrides.."
+  fi
+}
+
 set_pgdata
 check_env_vars
 generate_passwd_file
@@ -28,6 +41,7 @@ if [ "${NEED_TO_CREATE_USERS:-}" == "yes" ]; then
 fi
 set_passwords
 set_miq_role
+include_miq_config
 pg_ctl stop
 
 unset_env_vars
