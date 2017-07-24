@@ -14,14 +14,19 @@ function set_miq_role() {
 
 # Include MIQ config overrides if directory present
 function include_miq_config() {
-  POSTGRESQL_CONFIG_DIR=${POSTGRESQL_CONFIG_DIR:-/etc/manageiq/postgresql.conf.d}
-  if [ -d "${POSTGRESQL_CONFIG_DIR}" ]; then
+  # Set and create default dir if POSTGRESQL_CONFIG_DIR is not defined, compatible with older builds
+  POSTGRESQL_CONFIG_DIR=${POSTGRESQL_CONFIG_DIR:-/var/lib/pgsql/conf.d}
+
+  # Check for POSTGRESQL_CONFIG_DIR presence in postgresql.conf, if already there skip.
+  [[ $(grep ${POSTGRESQL_CONFIG_DIR} ${PGDATA}/postgresql.conf) ]] && RET=$? || RET=$?
+  if [[ $RET == "0" ]]; then
+    echo "${POSTGRESQL_CONFIG_DIR} already exists on ${PGDATA}/postgresql.conf, skipping.."
+  else
+   echo "Writing ${POSTGRESQL_CONFIG_DIR} config directory to ${PGDATA}/postgresql.conf"
     cat >> "$PGDATA/postgresql.conf" <<EOF
 # Begin ManageIQ configuration overrides:
 include_dir '${POSTGRESQL_CONFIG_DIR}'
 EOF
-  else
-    echo "${POSTGRESQL_CONFIG_DIR} directory not found, skipping config overrides.."
   fi
 }
 
@@ -35,13 +40,15 @@ if [ ! -f "$PGDATA/postgresql.conf" ]; then
   NEED_TO_CREATE_USERS=yes
 fi
 
+# Include MIQ overrides before first-startup
+include_miq_config
+
 pg_ctl -w start -o "-h ''"
 if [ "${NEED_TO_CREATE_USERS:-}" == "yes" ]; then
   create_users
 fi
 set_passwords
 set_miq_role
-include_miq_config
 pg_ctl stop
 
 unset_env_vars

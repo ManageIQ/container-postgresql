@@ -4,6 +4,9 @@ FROM centos/postgresql-95-centos7
 
 MAINTAINER ManageIQ https://github.com/ManageIQ/manageiq-appliance-build
 
+# Include config PG dir
+ARG PG_CONF_DIR=/var/lib/pgsql/conf.d
+
 # Switch USER to root to add required repo and packages
 USER root
 
@@ -22,7 +25,8 @@ LABEL io.openshift.tags="database,postgresql,postgresql95,rh-postgresql95,pglogi
 COPY docker-assets/run-postgresql /usr/bin
 
 # Loosen permission bits to avoid problems running container with arbitrary UID
-RUN /usr/libexec/fix-permissions /var/lib/pgsql && \
+RUN mkdir ${PG_CONF_DIR} && \
+    /usr/libexec/fix-permissions /var/lib/pgsql && \
     /usr/libexec/fix-permissions /var/run/postgresql
 
 # Switch USER back to postgres
