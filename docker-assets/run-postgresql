@@ -18,8 +18,7 @@ function include_miq_config() {
   POSTGRESQL_CONFIG_DIR=${POSTGRESQL_CONFIG_DIR:-/var/lib/pgsql/conf.d}
 
   # Check for POSTGRESQL_CONFIG_DIR presence in postgresql.conf, if already there skip.
-  [[ $(grep ${POSTGRESQL_CONFIG_DIR} ${PGDATA}/postgresql.conf) ]] && RET=$? || RET=$?
-  if [[ $RET == "0" ]]; then
+  if [[ $(grep ${POSTGRESQL_CONFIG_DIR} ${PGDATA}/postgresql.conf) && $? -eq 0 ]]; then
     echo "${POSTGRESQL_CONFIG_DIR} already exists on ${PGDATA}/postgresql.conf, skipping.."
   else
    echo "Writing ${POSTGRESQL_CONFIG_DIR} config directory to ${PGDATA}/postgresql.conf"
