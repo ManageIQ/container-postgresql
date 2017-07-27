@@ -7,6 +7,9 @@ MAINTAINER ManageIQ https://github.com/ManageIQ/manageiq-appliance-build
 # Include config PG dir
 ARG PG_CONF_DIR=/var/lib/pgsql/conf.d
 
+# Add scripts path
+ENV CONTAINER_SCRIPTS_ROOT=/opt/manageiq/container-scripts
+
 # Switch USER to root to add required repo and packages
 USER root
 
@@ -23,6 +26,7 @@ LABEL io.openshift.tags="database,postgresql,postgresql95,rh-postgresql95,pglogi
 
 # Modified pg startup script to add required role
 COPY docker-assets/run-postgresql /usr/bin
+ADD  docker-assets/container-scripts ${CONTAINER_SCRIPTS_ROOT}
 
 # Loosen permission bits to avoid problems running container with arbitrary UID
 RUN mkdir ${PG_CONF_DIR} && \
