@@ -43,7 +43,14 @@ echo "Current time is : $(date)"
 mkdir ${PV_RESTORE_DATADIR}
 tar -xzf ${PV_BACKUP_DATADIR}/base.tar.gz -C ${PV_RESTORE_DATADIR} --checkpoint=500
 
-[[ $? -ne 0 ]] && echo "ERROR: DB restore exited with abnormal status, please check job logs" && exit 1
+# Remove failed restore attempt if a failure is detected, restore previous data if it was present
 
-chmod 700 ${PV_RESTORE_DATADIR}
-echo "Sucessfully finished DB restore : $(date)"
+if [[ $? -ne 0 ]]; then 
+  echo "ERROR: DB restore exited with abnormal status, please check job logs"
+  rm -rf ${PV_RESTORE_DATADIR}
+  [[ -d ${PV_RESTORE_DIR}/userdata_${TIMESTAMP} ]] && mv ${PV_RESTORE_DIR}/userdata_${TIMESTAMP} ${PV_RESTORE_DATADIR}
+  exit 1
+else
+  chmod 700 ${PV_RESTORE_DATADIR}
+  echo "Sucessfully finished DB restore : $(date)"
+fi
