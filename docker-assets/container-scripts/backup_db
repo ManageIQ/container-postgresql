@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# Define vars
+PV_BACKUP_DIR=${PV_BACKUP_DIR:-/backups}
+BACKUP_TIMESTAMP=$(date +%Y%m%dT%H%M%S)
+
+# Sanity checks
+[[ -z ${DATABASE_URL} ]] && echo "ERROR: DATABASE_URL is not defined, exiting.." && exit 1
+
+# PG connstring does not like extra settings
+SHORT_DB_URL=$(echo $DATABASE_URL | cut -d / -f1-3)
+
+echo "== Starting MIQ DB backup =="
+echo "Current time is : $(date)"
+pg_basebackup -x -d ${SHORT_DB_URL} -Ft -z -D ${PV_BACKUP_DIR}/miq_backup_${BACKUP_TIMESTAMP} -P -v
+
+[[ $? -ne 0 ]] && echo "ERROR: ${PG_BASEBACKUP} exited with abnormal status, please check backup status" && exit 1
+
+echo "Sucessfully finished backup : $(date)"
+echo "Backup stored at : ${PV_BACKUP_DIR}/miq_backup_${BACKUP_TIMESTAMP}"
+
+# Set latest symlink to latest successful backup
+
+[[ -h ${PV_BACKUP_DIR}/latest ]] && rm -f ${PV_BACKUP_DIR}/latest
+cd ${PV_BACKUP_DIR} && ln -s miq_backup_${BACKUP_TIMESTAMP} latest
