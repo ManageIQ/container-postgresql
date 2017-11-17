@@ -14,8 +14,8 @@ ENV CONTAINER_SCRIPTS_ROOT=/opt/manageiq/container-scripts
 USER root
 
 # Fetch MIQ repo for pglogical and repmgr packages
-RUN curl -sSLko /etc/yum.repos.d/manageiq-ManageIQ-Fine-epel-7.repo \
-      https://copr.fedorainfracloud.org/coprs/manageiq/ManageIQ-Fine/repo/epel-7/manageiq-ManageIQ-Fine-epel-7.repo
+RUN curl -sSLko /etc/yum.repos.d/manageiq-ManageIQ-Master-epel-7.repo \
+      https://copr.fedorainfracloud.org/coprs/manageiq/ManageIQ-Master/repo/epel-7/manageiq-ManageIQ-Master-epel-7.repo
  
 RUN yum -y --setopt=tsflags=nodocs install rh-postgresql95-postgresql-pglogical \
                                            rh-postgresql95-repmgr && \
