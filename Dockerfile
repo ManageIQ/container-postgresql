@@ -4,9 +4,6 @@ FROM centos/postgresql-95-centos7
 
 MAINTAINER ManageIQ https://github.com/ManageIQ/manageiq-appliance-build
 
-# Include config PG dir
-ARG PG_CONF_DIR=/var/lib/pgsql/conf.d
-
 # Add scripts path
 ENV CONTAINER_SCRIPTS_ROOT=/opt/manageiq/container-scripts
 
@@ -29,8 +26,7 @@ COPY docker-assets/run-postgresql /usr/bin
 ADD  docker-assets/container-scripts ${CONTAINER_SCRIPTS_ROOT}
 
 # Loosen permission bits to avoid problems running container with arbitrary UID
-RUN mkdir ${PG_CONF_DIR} && \
-    /usr/libexec/fix-permissions /var/lib/pgsql && \
+RUN /usr/libexec/fix-permissions /var/lib/pgsql && \
     /usr/libexec/fix-permissions /var/run/postgresql
 
 # Switch USER back to postgres
