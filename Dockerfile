@@ -1,11 +1,11 @@
 # This image is layered from SCL centos7 openshift postgresql 9.5
 # https://github.com/sclorg/postgresql-container/tree/master/9.5
-FROM centos/postgresql-95-centos7
+FROM centos/postgresql-95-centos7:9.5
 
 MAINTAINER ManageIQ https://github.com/ManageIQ/manageiq-appliance-build
 
 ENV CONTAINER_SCRIPTS_ROOT=/opt/manageiq/container-scripts/ \
-    START_HOOKS_DIR=/opt/app-root/src/postgresql-start-hook/
+    START_HOOKS_DIR=/opt/app-root/src/postgresql-start/
 
 # Switch USER to root to add required repo and packages
 USER root
