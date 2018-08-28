@@ -12,7 +12,7 @@ SHORT_DB_URL=$(echo $DATABASE_URL | cut -d / -f1-3)
 
 echo "== Starting MIQ DB backup =="
 echo "Current time is : $(date)"
-pg_basebackup --xlog-method=stream -d ${SHORT_DB_URL} -Ft -z -D ${PV_BACKUP_DIR}/miq_backup_${BACKUP_TIMESTAMP} -P -v
+pg_basebackup -x -d ${SHORT_DB_URL} -Ft -z -D ${PV_BACKUP_DIR}/miq_backup_${BACKUP_TIMESTAMP} -P -v
 
 [[ $? -ne 0 ]] && echo "ERROR: ${PG_BASEBACKUP} exited with abnormal status, please check backup status" && exit 1
 
