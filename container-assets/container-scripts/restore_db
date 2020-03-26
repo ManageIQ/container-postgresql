@@ -1,33 +1,29 @@
 #!/bin/bash
 
-# Defaults
-# Notes : 
-# userdata is a directory created by the PG SCL image when the DB is first initialized on pod
 # latest is a symlink created by the backup jobscript pointing to the latest successful backup directory
-
 BACKUP_VERSION=${BACKUP_VERSION:-latest}
-PG_SVC_NAME=${PG_SVC_NAME:-postgresql}
-PV_BACKUP_DIR=${PV_BACKUP_DIR:-/backups}
-PV_BACKUP_DATADIR="${PV_BACKUP_DIR}/${BACKUP_VERSION}"
-PV_RESTORE_DIR=${PV_RESTORE_DIR:-/restore}
+PV_BACKUP_DATADIR="/backups/${BACKUP_VERSION}"
+
+# userdata is a directory created by the PG SCL image when the DB is first initialized on pod
+PV_RESTORE_DIR=/restore
 PV_RESTORE_DATADIR="${PV_RESTORE_DIR}/userdata"
+
 TIMESTAMP=$(date +%Y%m%dT%H%M%S)
 
+[[ -z ${DATABASE_HOSTNAME} ]] && echo "ERROR: DATABASE_HOSTNAME is not defined, exiting.." && exit 1
+[[ -z ${DATABASE_PORT} ]] && echo "ERROR: DATABASE_PORT is not defined, exiting.." && exit 1
+
 # Check if DB service is online, exit if true
-
-echo "== Checking ${PG_SVC_NAME} status =="
-pg_isready -h ${PG_SVC_NAME}
-
+echo "== Checking ${DATABASE_HOSTNAME}:${DATABASE_PORT} status =="
+pg_isready -h ${DATABASE_HOSTNAME} -p ${DATABASE_PORT}
 [ "$?" -eq "0" ] && echo "ERROR: PG service MUST BE OFFLINE before a database restore is attempted, exiting.." && exit 1
 
 # Check backup source and destination volumes, also ensure dest is writable
-
 [[ ! -d ${PV_BACKUP_DATADIR} ]] && echo "ERROR: Could not access ${PV_BACKUP_DATADIR}, please check volumes, exiting.." && exit 1
 [[ ! -d ${PV_RESTORE_DIR} ]] && echo "ERROR: Could not access ${PV_RESTORE_DIR}, please check volumes, exiting.." && exit 1
 [[ ! -w ${PV_RESTORE_DIR} ]] && echo "ERROR: ${PV_RESTORE_DIR} is not writable, please check volumes, exiting.." && exit 1
 
 # Check destination for existing data, if data is found rename dir
-
 echo "== Checking for existing PG data =="
 if [[ -d ${PV_RESTORE_DATADIR} ]]; then
   echo "Existing data found at : ${PV_RESTORE_DATADIR}"
@@ -44,7 +40,6 @@ mkdir ${PV_RESTORE_DATADIR}
 tar -xzf ${PV_BACKUP_DATADIR}/base.tar.gz -C ${PV_RESTORE_DATADIR} --checkpoint=500
 
 # Remove failed restore attempt if a failure is detected, restore previous data if it was present
-
 if [[ $? -ne 0 ]]; then 
   echo "ERROR: DB restore exited with abnormal status, please check job logs"
   rm -rf ${PV_RESTORE_DATADIR}

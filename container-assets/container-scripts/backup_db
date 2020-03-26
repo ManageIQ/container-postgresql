@@ -5,14 +5,24 @@ PV_BACKUP_DIR=${PV_BACKUP_DIR:-/backups}
 BACKUP_TIMESTAMP=$(date +%Y%m%dT%H%M%S)
 
 # Sanity checks
-[[ -z ${DATABASE_URL} ]] && echo "ERROR: DATABASE_URL is not defined, exiting.." && exit 1
+[[ -z ${DATABASE_HOSTNAME} ]] && echo "ERROR: DATABASE_HOSTNAME is not defined, exiting.." && exit 1
+[[ -z ${DATABASE_NAME} ]] && echo "ERROR: DATABASE_NAME is not defined, exiting.." && exit 1
+[[ -z ${DATABASE_PASSWORD} ]] && echo "ERROR: DATABASE_PASSWORD is not defined, exiting.." && exit 1
+[[ -z ${DATABASE_PORT} ]] && echo "ERROR: DATABASE_PORT is not defined, exiting.." && exit 1
+[[ -z ${DATABASE_USER} ]] && echo "ERROR: DATABASE_USER is not defined, exiting.." && exit 1
 
-# PG connstring does not like extra settings
-SHORT_DB_URL=$(echo $DATABASE_URL | cut -d / -f1-3)
+function urlescape() {
+  PAYLOAD="$1" python -c "import urllib; import os; print urllib.quote(os.environ['PAYLOAD'])"
+}
+
+safeuser=$(urlescape ${DATABASE_USER})
+safepass=$(urlescape ${DATABASE_PASSWORD})
+
+DATABASE_URL="postgresql://${safeuser}:${safepass}@${DATABASE_HOSTNAME}:${DATABASE_PORT}/${DATABASE_NAME}"
 
 echo "== Starting MIQ DB backup =="
 echo "Current time is : $(date)"
-pg_basebackup -x -d ${SHORT_DB_URL} -Ft -z -D ${PV_BACKUP_DIR}/miq_backup_${BACKUP_TIMESTAMP} -P -v
+pg_basebackup --wal-method=fetch -d ${DATABASE_URL} -Ft -z -D ${PV_BACKUP_DIR}/miq_backup_${BACKUP_TIMESTAMP} -P -v
 
 [[ $? -ne 0 ]] && echo "ERROR: ${PG_BASEBACKUP} exited with abnormal status, please check backup status" && exit 1
 
