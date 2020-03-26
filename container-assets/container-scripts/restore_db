@@ -36,6 +36,8 @@ fi
 echo "== Starting MIQ DB restore =="
 echo "Current time is : $(date)"
 
+echo "Restoring database at $(readlink -f ${PV_BACKUP_DATADIR}/base.tar.gz)"
+
 mkdir ${PV_RESTORE_DATADIR}
 tar -xzf ${PV_BACKUP_DATADIR}/base.tar.gz -C ${PV_RESTORE_DATADIR} --checkpoint=500
 
