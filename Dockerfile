@@ -8,6 +8,9 @@ ENV CONTAINER_SCRIPTS_ROOT=/opt/manageiq/container-scripts/ \
 # Switch USER to root to add required repo and packages
 USER root
 
+RUN yum -y update rh-postgresql10-* && \
+    yum clean all
+
 ADD container-assets/container-scripts ${CONTAINER_SCRIPTS_ROOT}
 ADD container-assets/on-start.sh ${START_HOOKS_DIR}
 
