@@ -1,4 +1,4 @@
-FROM centos/postgresql-10-centos7:latest
+FROM centos/postgresql-12-centos7:latest
 
 MAINTAINER ManageIQ https://github.com/ManageIQ/manageiq-appliance-build
 
