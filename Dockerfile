@@ -1,4 +1,4 @@
-FROM centos/postgresql-10-centos7:latest
+FROM centos/postgresql-10-centos8:latest
 
 MAINTAINER ManageIQ https://github.com/ManageIQ/manageiq-appliance-build
 
@@ -8,7 +8,7 @@ ENV CONTAINER_SCRIPTS_ROOT=/opt/manageiq/container-scripts/ \
 # Switch USER to root to add required repo and packages
 USER root
 
-RUN yum -y update rh-postgresql10-* && \
+RUN yum -y update postgresql-* && \
     yum clean all
 
 ADD container-assets/container-scripts ${CONTAINER_SCRIPTS_ROOT}
