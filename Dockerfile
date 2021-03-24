@@ -2,6 +2,11 @@ FROM centos/postgresql-10-centos8:latest
 
 MAINTAINER ManageIQ https://github.com/ManageIQ/manageiq-appliance-build
 
+LABEL name="PostgreSQL" \
+      summary="PostgreSQL Image" \
+      vendor="ManageIQ" \
+      description="PostgreSQL is a powerful, open source object-relational database system"
+
 ENV CONTAINER_SCRIPTS_ROOT=/opt/manageiq/container-scripts/ \
     START_HOOKS_DIR=/opt/app-root/src/postgresql-start/
 
