@@ -27,6 +27,7 @@ RUN yum -y update postgresql-* && \
 
 ADD container-assets/container-scripts ${CONTAINER_SCRIPTS_ROOT}
 ADD container-assets/on-start.sh ${START_HOOKS_DIR}
+ADD container-assets/pre-start.sh ${APP_DATA}/src/postgresql-pre-start/
 
 # Loosen permission bits to avoid problems running container with arbitrary UID
 RUN /usr/libexec/fix-permissions /var/lib/pgsql && \
