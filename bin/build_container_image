@@ -1,0 +1,20 @@
+#!/bin/bash
+
+REGISTRY=${REGISTRY:-"docker.io"}
+ORGANIZATION=${ORGANIZATION:-"manageiq"}
+DEFAULT_TAG="10"
+[[ $TRAVIS_BRANCH != "master" ]] && DEFAULT_TAG="latest-$TRAVIS_BRANCH"
+TAG=${TAG:-"$DEFAULT_TAG"}
+IMAGE_NAME=$REGISTRY/$ORGANIZATION/postgresql:$TAG
+
+set -e
+
+docker build . -t $IMAGE_NAME
+
+[[ $TRAVIS_PULL_REQUEST != "false" ]] && exit 0
+
+echo "$REGISTRY_PASSWORD" | docker login $REGISTRY -u $REGISTRY_USERNAME --password-stdin
+
+docker push $IMAGE_NAME
+
+set +e
