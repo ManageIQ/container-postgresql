@@ -9,7 +9,7 @@ RUN cd /tmp && \
 
 ################################################################################
 
-FROM ubi8/s2i-core
+FROM registry.access.redhat.com/ubi8/s2i-core
 
 # PostgreSQL image for OpenShift.
 # Volumes:
@@ -20,6 +20,8 @@ FROM ubi8/s2i-core
 #  * $POSTGRESQL_DATABASE - Name of the database to create
 #  * $POSTGRESQL_ADMIN_PASSWORD (Optional) - Password for the 'postgres'
 #                           PostgreSQL administrative account
+
+ARG ARCH=x86_64
 
 ENV POSTGRESQL_VERSION=10 \
     POSTGRESQL_PREV_VERSION=9.6 \
@@ -53,7 +55,10 @@ COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 # This image must forever use UID 26 for postgres user so our volumes are
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
-RUN yum -y module enable postgresql:10 && \
+RUN yum -y --setopt=tsflags=nodocs install \
+      http://mirror.centos.org/centos/8-stream/BaseOS/${ARCH}/os/Packages/centos-stream-repos-8-2.el8.noarch.rpm \
+      http://mirror.centos.org/centos/8-stream/BaseOS/${ARCH}/os/Packages/centos-gpg-keys-8-2.el8.noarch.rpm && \
+    yum -y module enable postgresql:10 && \
     INSTALL_PKGS="rsync tar gettext bind-utils nss_wrapper postgresql-server postgresql-contrib" && \
     yum -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
