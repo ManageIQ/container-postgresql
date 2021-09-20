@@ -9,7 +9,14 @@ RUN cd /tmp && \
 
 ################################################################################
 
-FROM registry.access.redhat.com/ubi8/s2i-core
+FROM registry.access.redhat.com/ubi8/ubi-minimal:latest AS postgresql_container_source
+
+RUN microdnf -y --setopt=tsflags=nodocs install git
+RUN git clone --branch generated --depth 1 https://github.com/sclorg/postgresql-container /postgresql-container
+
+################################################################################
+
+FROM registry.access.redhat.com/ubi8/s2i-core AS base
 
 # PostgreSQL image for OpenShift.
 # Volumes:
@@ -50,7 +57,7 @@ LABEL summary="$SUMMARY" \
 
 EXPOSE 5432
 
-COPY root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
+COPY --from=postgresql_container_source /postgresql-container/10/root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 
 # This image must forever use UID 26 for postgres user so our volumes are
 # safe in the future. This should *never* change, the last test is there
@@ -73,8 +80,8 @@ RUN yum -y --setopt=tsflags=nodocs install \
 ENV CONTAINER_SCRIPTS_PATH=/usr/share/container-scripts/postgresql \
     ENABLED_COLLECTIONS=
 
-COPY root /
-COPY ./s2i/bin/ $STI_SCRIPTS_PATH
+COPY --from=postgresql_container_source /postgresql-container/10/root /
+COPY --from=postgresql_container_source /postgresql-container/10/s2i/bin/ $STI_SCRIPTS_PATH
 
 # Not using VOLUME statement since it's not working in OpenShift Online:
 # https://github.com/sclorg/httpd-container/issues/30
@@ -101,7 +108,7 @@ CMD ["run-postgresql"]
 
 ################################################################################
 
-FROM centos/postgresql-10-centos8:latest
+FROM base
 
 MAINTAINER ManageIQ https://github.com/ManageIQ/manageiq-appliance-build
 
