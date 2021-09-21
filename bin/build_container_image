@@ -2,14 +2,18 @@
 
 REGISTRY=${REGISTRY:-"docker.io"}
 ORGANIZATION=${ORGANIZATION:-"manageiq"}
+
+[[ -z "$TRAVIS_BRANCH" ]] && TRAVIS_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
 DEFAULT_TAG="10"
 [[ $TRAVIS_BRANCH != "master" ]] && DEFAULT_TAG="latest-$TRAVIS_BRANCH"
 TAG=${TAG:-"$DEFAULT_TAG"}
+
 IMAGE_NAME=$REGISTRY/$ORGANIZATION/postgresql:$TAG
+ARCH=${ARCH:-"$(uname -m)"}
 
 set -e
 
-docker build . -t $IMAGE_NAME
+docker build . --build-arg ARCH=$ARCH -t $IMAGE_NAME
 
 [[ $TRAVIS_PULL_REQUEST != "false" ]] && exit 0
 
