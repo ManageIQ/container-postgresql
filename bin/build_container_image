@@ -2,23 +2,28 @@
 
 REGISTRY=${REGISTRY:-"docker.io"}
 ORGANIZATION=${ORGANIZATION:-"manageiq"}
-
-[[ -z "$TRAVIS_BRANCH" ]] && TRAVIS_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
-DEFAULT_TAG="10"
-[[ $TRAVIS_BRANCH != "master" ]] && DEFAULT_TAG="latest-$TRAVIS_BRANCH"
-TAG=${TAG:-"$DEFAULT_TAG"}
-
-IMAGE_NAME=$REGISTRY/$ORGANIZATION/postgresql:$TAG
-ARCH=${ARCH:-"$(uname -m)"}
+IMAGE_NAME=$REGISTRY/$ORGANIZATION/postgresql
 
 set -e
 
-docker build . --build-arg ARCH=$ARCH -t $IMAGE_NAME
+ARCH=${ARCH:-"$(uname -m)"}
+docker build . --build-arg ARCH=$ARCH -t localhost/build:latest
+
+VERSION=$(docker run --rm --entrypoint bash localhost/build:latest -c "rpm -q --queryformat '%{VERSION}\n' postgresql")
+IFS=. read major minor _patch <<< ${VERSION}
+
+set -v
+docker tag localhost/build:latest $IMAGE_NAME:$major
+docker tag localhost/build:latest $IMAGE_NAME:$major.$minor
+set +v
+
+docker images
 
 [[ $TRAVIS_PULL_REQUEST != "false" ]] && exit 0
 
 echo "$REGISTRY_PASSWORD" | docker login $REGISTRY -u $REGISTRY_USERNAME --password-stdin
 
-docker push $IMAGE_NAME
+docker push $IMAGE_NAME:$major
+docker push $IMAGE_NAME:$major.$minor
 
 set +e
