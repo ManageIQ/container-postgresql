@@ -19,7 +19,7 @@ set +v
 
 docker images
 
-[[ $GITHUB_EVENT_NAME == "pull_request" ]] && exit 0
+[ -z "$REGISTRY_USERNAME" ] && exit 0
 
 echo "$REGISTRY_PASSWORD" | docker login $REGISTRY -u $REGISTRY_USERNAME --password-stdin
 
