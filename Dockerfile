@@ -71,9 +71,9 @@ RUN if [ "$(uname -m)" != "s390x" ]; then \
       rpm -V postgresql-server postgresql-contrib; \
     else \
       yum -y install \
-         /opt/app-root/src/bin-rpm-dir/postgresql-*.el8.s390x.rpm \
-         /opt/app-root/src/bin-rpm-dir/postgresql-contrib-*.el8.s390x.rpm \
-         /opt/app-root/src/bin-rpm-dir/postgresql-server-*.el8.s390x.rpm && \
+         /opt/app-root/src/bin-rpm-dir/postgresql-10*.el8.s390x.rpm \
+         /opt/app-root/src/bin-rpm-dir/postgresql-contrib-10*.el8.s390x.rpm \
+         /opt/app-root/src/bin-rpm-dir/postgresql-server-10*.el8.s390x.rpm && \
       rm -rf /opt/app-root/src/bin-rpm-dir; \
     fi && \
     INSTALL_PKGS="rsync tar gettext bind-utils nss_wrapper" && \
