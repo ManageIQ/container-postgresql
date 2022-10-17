@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi8/ubi-minimal:latest AS manifest
+FROM registry.access.redhat.com/ubi9/ubi-minimal:latest AS manifest
 
 COPY .git /tmp/.git
 
@@ -9,18 +9,18 @@ RUN cd /tmp && \
 
 ################################################################################
 
-FROM registry.access.redhat.com/ubi8/ubi-minimal:latest AS postgresql_container_source
+FROM registry.access.redhat.com/ubi9/ubi-minimal:latest AS postgresql_container_source
 
 RUN microdnf -y --setopt=tsflags=nodocs install git
 RUN git clone --branch generated --depth 1 https://github.com/sclorg/postgresql-container /postgresql-container
 
 ################################################################################
 
-FROM registry.access.redhat.com/ubi8/s2i-core AS base
+FROM registry.access.redhat.com/ubi9/s2i-core as base
 
 # PostgreSQL image for OpenShift.
 # Volumes:
-#  * /var/lib/psql/data   - Database cluster for PostgreSQL
+#  * /var/lib/pgsql/data  - Database cluster for PostgreSQL
 # Environment:
 #  * $POSTGRESQL_USER     - Database user name
 #  * $POSTGRESQL_PASSWORD - User's password
@@ -30,8 +30,8 @@ FROM registry.access.redhat.com/ubi8/s2i-core AS base
 
 ARG ARCH=x86_64
 
-ENV POSTGRESQL_VERSION=10 \
-    POSTGRESQL_PREV_VERSION=9.6 \
+ENV POSTGRESQL_VERSION=13 \
+    POSTGRESQL_PREV_VERSION=12 \
     HOME=/var/lib/pgsql \
     PGUSER=postgres \
     APP_DATA=/opt/app-root
@@ -44,20 +44,20 @@ create, run, maintain and access a PostgreSQL DBMS server."
 LABEL summary="$SUMMARY" \
       description="$DESCRIPTION" \
       io.k8s.description="$DESCRIPTION" \
-      io.k8s.display-name="PostgreSQL 10" \
+      io.k8s.display-name="PostgreSQL 13" \
       io.openshift.expose-services="5432:postgresql" \
-      io.openshift.tags="database,postgresql,postgresql10,postgresql-10" \
+      io.openshift.tags="database,postgresql,postgresql13,postgresql-13" \
       io.openshift.s2i.assemble-user="26" \
-      name="rhel8/postgresql-10" \
-      com.redhat.component="postgresql-10-container" \
+      name="rhel9/postgresql-13" \
+      com.redhat.component="postgresql-13-container" \
       version="1" \
       com.redhat.license_terms="https://www.redhat.com/en/about/red-hat-end-user-license-agreements#rhel" \
-      usage="podman run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 rhel8/postgresql-10" \
+      usage="podman run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 rhel9/postgresql-13" \
       maintainer="SoftwareCollections.org <sclorg@redhat.com>"
 
 EXPOSE 5432
 
-COPY --from=postgresql_container_source /postgresql-container/10/root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
+COPY --from=postgresql_container_source /postgresql-container/13/root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 
 # This image must forever use UID 26 for postgres user so our volumes are
 # safe in the future. This should *never* change, the last test is there
@@ -90,8 +90,8 @@ RUN if [ "$(uname -m)" != "s390x" ]; then \
 ENV CONTAINER_SCRIPTS_PATH=/usr/share/container-scripts/postgresql \
     ENABLED_COLLECTIONS=
 
-COPY --from=postgresql_container_source /postgresql-container/10/root /
-COPY --from=postgresql_container_source /postgresql-container/10/s2i/bin/ $STI_SCRIPTS_PATH
+COPY --from=postgresql_container_source /postgresql-container/13/root /
+COPY --from=postgresql_container_source /postgresql-container/13/s2i/bin/ $STI_SCRIPTS_PATH
 
 # Not using VOLUME statement since it's not working in OpenShift Online:
 # https://github.com/sclorg/httpd-container/issues/30
