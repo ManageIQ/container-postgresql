@@ -28,8 +28,6 @@ FROM registry.access.redhat.com/ubi9/s2i-core as base
 #  * $POSTGRESQL_ADMIN_PASSWORD (Optional) - Password for the 'postgres'
 #                           PostgreSQL administrative account
 
-ARG ARCH=x86_64
-
 ENV POSTGRESQL_VERSION=13 \
     POSTGRESQL_PREV_VERSION=12 \
     HOME=/var/lib/pgsql \
@@ -62,21 +60,15 @@ COPY --from=postgresql_container_source /postgresql-container/13/root/usr/libexe
 # This image must forever use UID 26 for postgres user so our volumes are
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
-RUN if [ "$(uname -m)" != "s390x" ]; then \
-      yum -y --setopt=tsflags=nodocs install \
-         http://mirror.centos.org/centos/8-stream/BaseOS/${ARCH}/os/Packages/centos-stream-repos-8-2.el8.noarch.rpm \
-         http://mirror.centos.org/centos/8-stream/BaseOS/${ARCH}/os/Packages/centos-gpg-keys-8-2.el8.noarch.rpm && \
-      yum -y module enable postgresql:10 && \
-      yum -y --setopt=tsflags=nodocs install postgresql-server postgresql-contrib && \
-      rpm -V postgresql-server postgresql-contrib; \
-    else \
-      yum -y install \
-         /opt/app-root/src/bin-rpm-dir/postgresql-10*.el8.s390x.rpm \
-         /opt/app-root/src/bin-rpm-dir/postgresql-contrib-10*.el8.s390x.rpm \
-         /opt/app-root/src/bin-rpm-dir/postgresql-server-10*.el8.s390x.rpm && \
-      rm -rf /opt/app-root/src/bin-rpm-dir; \
-    fi && \
-    INSTALL_PKGS="rsync tar gettext bind-utils nss_wrapper" && \
+RUN ARCH=$(uname -m) && \
+    dnf -y --setopt=protected_packages= remove redhat-release && \
+    dnf -y remove *subscription-manager* && \
+    dnf -y install \
+      http://mirror.stream.centos.org/9-stream/BaseOS/${ARCH}/os/Packages/centos-stream-release-9.0-12.el9.noarch.rpm \
+      http://mirror.stream.centos.org/9-stream/BaseOS/${ARCH}/os/Packages/centos-stream-repos-9.0-12.el9.noarch.rpm \
+      http://mirror.stream.centos.org/9-stream/BaseOS/${ARCH}/os/Packages/centos-gpg-keys-9.0-12.el9.noarch.rpm && \
+    INSTALL_PKGS="rsync tar gettext bind-utils nss_wrapper postgresql-server postgresql-contrib" && \
+    INSTALL_PKGS="$INSTALL_PKGS pgaudit" && \
     yum -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
     yum -y reinstall tzdata && \
