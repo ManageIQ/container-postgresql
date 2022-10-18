@@ -1,13 +1,13 @@
 # container-postgresql
 
-Container with PostgreSQL and built on ubi8, for ManageIQ.
+Container with PostgreSQL and built on ubi9, for ManageIQ.
 
 ## Usage
 
 Environment Variables:
 
 * Volumes
-  * /var/lib/psql/data - Database cluster for PostgreSQL
+  * /var/lib/pgsql/data - Database cluster for PostgreSQL
 * Environment
   * POSTGRESQL_USER           - Database user name
   * POSTGRESQL_PASSWORD       - User's password
@@ -26,16 +26,16 @@ Example:
 
 ```sh
 docker run -p 5432:5432 \
-  -v /tmp/vol:/var/lib/psql/data \
+  -v /tmp/vol:/var/lib/pgsql/data \
   -e POSTGRESQL_USER=root \
   -e POSTGRESQL_PASSWORD=smartvm \
   -e POSTGRESQL_DATABASE=vmdb_production \
-  docker.io/manageiq/postgresql:10
+  docker.io/manageiq/postgresql:13
 ```
 
 ## License
 
 This project is available as open source under the terms of the [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0).
 
-This project contains a copy of the [upstream sclorg/postgresql-container image](https://github.com/sclorg/postgresql-container/blob/29118f4846c42bfc084b085e48d45f1d3536ad07/10/Dockerfile.rhel8),
+This project contains a copy of the [upstream sclorg/postgresql-container image](https://github.com/sclorg/postgresql-container/blob/642cde251f7f9518b3765b0ff56ef0d5f807e8af/13/Dockerfile.rhel9),
 which was then modified for multi-arch support. That original source is licensed under the terms of the Apache 2.0 License.
