@@ -71,6 +71,7 @@ RUN ARCH=$(uname -m) && \
     INSTALL_PKGS="$INSTALL_PKGS pgaudit" && \
     yum -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
+    yum -y update tzdata && \
     yum -y reinstall tzdata && \
     yum -y clean all --enablerepo='*' && \
     localedef -f UTF-8 -i en_US en_US.UTF-8 && \
