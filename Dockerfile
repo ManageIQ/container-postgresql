@@ -28,8 +28,6 @@ FROM registry.access.redhat.com/ubi8/s2i-core AS base
 #  * $POSTGRESQL_ADMIN_PASSWORD (Optional) - Password for the 'postgres'
 #                           PostgreSQL administrative account
 
-ARG ARCH=x86_64
-
 ENV POSTGRESQL_VERSION=10 \
     POSTGRESQL_PREV_VERSION=9.6 \
     HOME=/var/lib/pgsql \
@@ -62,7 +60,8 @@ COPY --from=postgresql_container_source /postgresql-container/10/root/usr/libexe
 # This image must forever use UID 26 for postgres user so our volumes are
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
-RUN if [ "$(uname -m)" != "s390x" ]; then \
+RUN ARCH=$(uname -m) && \
+    if [ "$(uname -m)" != "s390x" ]; then \
       yum -y --setopt=tsflags=nodocs install \
          http://mirror.centos.org/centos/8-stream/BaseOS/${ARCH}/os/Packages/centos-stream-repos-8-2.el8.noarch.rpm \
          http://mirror.centos.org/centos/8-stream/BaseOS/${ARCH}/os/Packages/centos-gpg-keys-8-2.el8.noarch.rpm && \
