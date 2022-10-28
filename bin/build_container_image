@@ -6,7 +6,8 @@ IMAGE_NAME=$REGISTRY/$ORGANIZATION/postgresql
 
 set -e
 
-docker build . -t localhost/build:latest
+ARCH=${ARCH:-"$(uname -m)"}
+docker build . --build-arg ARCH=$ARCH -t localhost/build:latest
 
 VERSION=$(docker run --rm --entrypoint bash localhost/build:latest -c "rpm -q --queryformat '%{VERSION}\n' postgresql")
 IFS=. read major minor _patch <<< ${VERSION}

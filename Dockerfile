@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi9/ubi-minimal:latest AS manifest
+FROM registry.access.redhat.com/ubi8/ubi-minimal:latest AS manifest
 
 COPY .git /tmp/.git
 
@@ -9,18 +9,18 @@ RUN cd /tmp && \
 
 ################################################################################
 
-FROM registry.access.redhat.com/ubi9/ubi-minimal:latest AS postgresql_container_source
+FROM registry.access.redhat.com/ubi8/ubi-minimal:latest AS postgresql_container_source
 
 RUN microdnf -y --setopt=tsflags=nodocs install git
 RUN git clone --branch generated --depth 1 https://github.com/sclorg/postgresql-container /postgresql-container
 
 ################################################################################
 
-FROM registry.access.redhat.com/ubi9/s2i-core as base
+FROM registry.access.redhat.com/ubi8/s2i-core AS base
 
 # PostgreSQL image for OpenShift.
 # Volumes:
-#  * /var/lib/pgsql/data  - Database cluster for PostgreSQL
+#  * /var/lib/psql/data   - Database cluster for PostgreSQL
 # Environment:
 #  * $POSTGRESQL_USER     - Database user name
 #  * $POSTGRESQL_PASSWORD - User's password
@@ -28,8 +28,10 @@ FROM registry.access.redhat.com/ubi9/s2i-core as base
 #  * $POSTGRESQL_ADMIN_PASSWORD (Optional) - Password for the 'postgres'
 #                           PostgreSQL administrative account
 
-ENV POSTGRESQL_VERSION=13 \
-    POSTGRESQL_PREV_VERSION=12 \
+ARG ARCH=x86_64
+
+ENV POSTGRESQL_VERSION=10 \
+    POSTGRESQL_PREV_VERSION=9.6 \
     HOME=/var/lib/pgsql \
     PGUSER=postgres \
     APP_DATA=/opt/app-root
@@ -42,33 +44,39 @@ create, run, maintain and access a PostgreSQL DBMS server."
 LABEL summary="$SUMMARY" \
       description="$DESCRIPTION" \
       io.k8s.description="$DESCRIPTION" \
-      io.k8s.display-name="PostgreSQL 13" \
+      io.k8s.display-name="PostgreSQL 10" \
       io.openshift.expose-services="5432:postgresql" \
-      io.openshift.tags="database,postgresql,postgresql13,postgresql-13" \
+      io.openshift.tags="database,postgresql,postgresql10,postgresql-10" \
       io.openshift.s2i.assemble-user="26" \
-      name="rhel9/postgresql-13" \
-      com.redhat.component="postgresql-13-container" \
+      name="rhel8/postgresql-10" \
+      com.redhat.component="postgresql-10-container" \
       version="1" \
       com.redhat.license_terms="https://www.redhat.com/en/about/red-hat-end-user-license-agreements#rhel" \
-      usage="podman run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 rhel9/postgresql-13" \
+      usage="podman run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 rhel8/postgresql-10" \
       maintainer="SoftwareCollections.org <sclorg@redhat.com>"
 
 EXPOSE 5432
 
-COPY --from=postgresql_container_source /postgresql-container/13/root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
+COPY --from=postgresql_container_source /postgresql-container/10/root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 
 # This image must forever use UID 26 for postgres user so our volumes are
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
-RUN ARCH=$(uname -m) && \
-    dnf -y --setopt=protected_packages= remove redhat-release && \
-    dnf -y remove *subscription-manager* && \
-    dnf -y install \
-      http://mirror.stream.centos.org/9-stream/BaseOS/${ARCH}/os/Packages/centos-stream-release-9.0-12.el9.noarch.rpm \
-      http://mirror.stream.centos.org/9-stream/BaseOS/${ARCH}/os/Packages/centos-stream-repos-9.0-12.el9.noarch.rpm \
-      http://mirror.stream.centos.org/9-stream/BaseOS/${ARCH}/os/Packages/centos-gpg-keys-9.0-12.el9.noarch.rpm && \
-    INSTALL_PKGS="rsync tar gettext bind-utils nss_wrapper postgresql-server postgresql-contrib" && \
-    INSTALL_PKGS="$INSTALL_PKGS pgaudit" && \
+RUN if [ "$(uname -m)" != "s390x" ]; then \
+      yum -y --setopt=tsflags=nodocs install \
+         http://mirror.centos.org/centos/8-stream/BaseOS/${ARCH}/os/Packages/centos-stream-repos-8-2.el8.noarch.rpm \
+         http://mirror.centos.org/centos/8-stream/BaseOS/${ARCH}/os/Packages/centos-gpg-keys-8-2.el8.noarch.rpm && \
+      yum -y module enable postgresql:10 && \
+      yum -y --setopt=tsflags=nodocs install postgresql-server postgresql-contrib && \
+      rpm -V postgresql-server postgresql-contrib; \
+    else \
+      yum -y install \
+         /opt/app-root/src/bin-rpm-dir/postgresql-10*.el8.s390x.rpm \
+         /opt/app-root/src/bin-rpm-dir/postgresql-contrib-10*.el8.s390x.rpm \
+         /opt/app-root/src/bin-rpm-dir/postgresql-server-10*.el8.s390x.rpm && \
+      rm -rf /opt/app-root/src/bin-rpm-dir; \
+    fi && \
+    INSTALL_PKGS="rsync tar gettext bind-utils nss_wrapper" && \
     yum -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
     yum -y update tzdata && \
@@ -83,8 +91,8 @@ RUN ARCH=$(uname -m) && \
 ENV CONTAINER_SCRIPTS_PATH=/usr/share/container-scripts/postgresql \
     ENABLED_COLLECTIONS=
 
-COPY --from=postgresql_container_source /postgresql-container/13/root /
-COPY --from=postgresql_container_source /postgresql-container/13/s2i/bin/ $STI_SCRIPTS_PATH
+COPY --from=postgresql_container_source /postgresql-container/10/root /
+COPY --from=postgresql_container_source /postgresql-container/10/s2i/bin/ $STI_SCRIPTS_PATH
 
 # Not using VOLUME statement since it's not working in OpenShift Online:
 # https://github.com/sclorg/httpd-container/issues/30
