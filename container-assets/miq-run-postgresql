@@ -1,0 +1,9 @@
+#!/bin/bash
+
+for file in /run/secrets/postgresql/*
+do
+    [ -e "$file" ] || continue
+    export "$(basename $file)=$(cat $file)"
+done
+
+exec "/usr/bin/run-postgresql"

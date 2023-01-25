@@ -134,6 +134,7 @@ RUN yum -y update postgresql-* && \
     yum clean all
 
 ADD container-assets/container-scripts /opt/manageiq/container-scripts/
+ADD container-assets/miq-run-postgresql /usr/bin/
 ADD container-assets/on-start.sh ${APP_DATA}/src/postgresql-start/
 ADD container-assets/pre-start.sh ${APP_DATA}/src/postgresql-pre-start/
 
@@ -146,3 +147,5 @@ COPY --from=manifest /tmp/BUILD /opt/manageiq/manifest
 
 # Switch USER back to postgres
 USER 26
+
+CMD ["miq-run-postgresql"]
