@@ -65,18 +65,10 @@ COPY --from=postgresql_container_source /postgresql-container/10/root/usr/libexe
 RUN if [ "$(uname -m)" != "s390x" ]; then \
       yum -y --setopt=tsflags=nodocs install \
          http://mirror.centos.org/centos/8-stream/BaseOS/${ARCH}/os/Packages/centos-stream-repos-8-2.el8.noarch.rpm \
-         http://mirror.centos.org/centos/8-stream/BaseOS/${ARCH}/os/Packages/centos-gpg-keys-8-2.el8.noarch.rpm && \
-      yum -y module enable postgresql:10 && \
-      yum -y --setopt=tsflags=nodocs install postgresql-server postgresql-contrib && \
-      rpm -V postgresql-server postgresql-contrib; \
-    else \
-      yum -y install \
-         /opt/app-root/src/bin-rpm-dir/postgresql-10*.el8.s390x.rpm \
-         /opt/app-root/src/bin-rpm-dir/postgresql-contrib-10*.el8.s390x.rpm \
-         /opt/app-root/src/bin-rpm-dir/postgresql-server-10*.el8.s390x.rpm && \
-      rm -rf /opt/app-root/src/bin-rpm-dir; \
+         http://mirror.centos.org/centos/8-stream/BaseOS/${ARCH}/os/Packages/centos-gpg-keys-8-2.el8.noarch.rpm; \
     fi && \
-    INSTALL_PKGS="rsync tar gettext bind-utils nss_wrapper" && \
+    yum -y module enable postgresql:10 && \
+    INSTALL_PKGS="postgresql-server postgresql-contrib rsync tar gettext bind-utils nss_wrapper" && \
     yum -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
     yum -y update tzdata && \
