@@ -25,6 +25,13 @@ check_env_vars
 generate_passwd_file
 generate_postgresql_config
 
+# MIQ conditionally inject SSL config
+if [ -f /etc/pki/tls/private/server.key ]; then
+  echo "ssl = on" >> $POSTGRESQL_CONFIG_FILE
+  echo "ssl_cert_file = '/etc/pki/tls/certs/server.crt'" >> $POSTGRESQL_CONFIG_FILE
+  echo "ssl_key_file = '/etc/pki/tls/private/server.key'" >> $POSTGRESQL_CONFIG_FILE
+fi
+
 # Is this brand new data volume?
 PG_INITIALIZED=false
 
@@ -33,6 +40,12 @@ if [ ! -f "$PGDATA/postgresql.conf" ]; then
   PG_INITIALIZED=:
 else
   try_pgupgrade
+fi
+
+# MIQ conditionally configure SSL listener
+if [ -f /etc/pki/tls/private/server.key ]; then
+  # Can't do this before initialize_database
+  sed -i 's/host\(\b.*\)/hostssl\1/g' /var/lib/pgsql/data/userdata/pg_hba.conf
 fi
 
 # Use insanely large timeout (24h) to ensure that the potential recovery has
