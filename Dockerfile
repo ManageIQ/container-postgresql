@@ -74,6 +74,7 @@ RUN ARCH=$(uname -m) && \
     yum -y reinstall tzdata && \
     yum -y clean all --enablerepo='*' && \
     localedef -f UTF-8 -i en_US en_US.UTF-8 && \
+    chmod -R g+w /etc/pki/tls && \
     test "$(id postgres)" = "uid=26(postgres) gid=26(postgres) groups=26(postgres)" && \
     mkdir -p /var/lib/pgsql/data && \
     /usr/libexec/fix-permissions /var/lib/pgsql /var/run/postgresql
