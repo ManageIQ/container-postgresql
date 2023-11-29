@@ -20,7 +20,7 @@ FROM registry.access.redhat.com/ubi8/s2i-core AS base
 
 # PostgreSQL image for OpenShift.
 # Volumes:
-#  * /var/lib/psql/data   - Database cluster for PostgreSQL
+#  * /var/lib/pgsql/data   - Database cluster for PostgreSQL
 # Environment:
 #  * $POSTGRESQL_USER     - Database user name
 #  * $POSTGRESQL_PASSWORD - User's password
@@ -28,8 +28,8 @@ FROM registry.access.redhat.com/ubi8/s2i-core AS base
 #  * $POSTGRESQL_ADMIN_PASSWORD (Optional) - Password for the 'postgres'
 #                           PostgreSQL administrative account
 
-ENV POSTGRESQL_VERSION=13 \
-    POSTGRESQL_PREV_VERSION=10 \
+ENV POSTGRESQL_VERSION=15 \
+    POSTGRESQL_PREV_VERSION=13 \
     HOME=/var/lib/pgsql \
     PGUSER=postgres \
     APP_DATA=/opt/app-root
@@ -42,20 +42,20 @@ create, run, maintain and access a PostgreSQL DBMS server."
 LABEL summary="$SUMMARY" \
       description="$DESCRIPTION" \
       io.k8s.description="$DESCRIPTION" \
-      io.k8s.display-name="PostgreSQL 13" \
+      io.k8s.display-name="PostgreSQL 15" \
       io.openshift.expose-services="5432:postgresql" \
-      io.openshift.tags="database,postgresql,postgresql13,postgresql-13" \
+      io.openshift.tags="database,postgresql,postgresql15,postgresql-15" \
       io.openshift.s2i.assemble-user="26" \
-      name="rhel8/postgresql-13" \
-      com.redhat.component="postgresql-13-container" \
+      name="rhel8/postgresql-15" \
+      com.redhat.component="postgresql-15-container" \
       version="1" \
       com.redhat.license_terms="https://www.redhat.com/en/about/red-hat-end-user-license-agreements#rhel" \
-      usage="podman run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 rhel8/postgresql-13" \
+      usage="podman run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 rhel8/postgresql-15" \
       maintainer="SoftwareCollections.org <sclorg@redhat.com>"
 
 EXPOSE 5432
 
-COPY --from=postgresql_container_source /postgresql-container/13/root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
+COPY --from=postgresql_container_source /postgresql-container/15/root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 
 # This image must forever use UID 26 for postgres user so our volumes are
 # safe in the future. This should *never* change, the last test is there
@@ -63,15 +63,16 @@ COPY --from=postgresql_container_source /postgresql-container/13/root/usr/libexe
 RUN ARCH=$(uname -m) && \
     if [ "$(uname -m)" != "s390x" ]; then \
       yum -y --setopt=tsflags=nodocs install \
-         http://mirror.centos.org/centos/8-stream/BaseOS/${ARCH}/os/Packages/centos-stream-repos-8-2.el8.noarch.rpm \
-         http://mirror.centos.org/centos/8-stream/BaseOS/${ARCH}/os/Packages/centos-gpg-keys-8-2.el8.noarch.rpm; \
+         http://mirror.centos.org/centos/8-stream/BaseOS/${ARCH}/os/Packages/centos-stream-repos-8-6.el8.noarch.rpm \
+         http://mirror.centos.org/centos/8-stream/BaseOS/${ARCH}/os/Packages/centos-gpg-keys-8-6.el8.noarch.rpm; \
     fi && \
-    yum -y module enable postgresql:13 && \
-    INSTALL_PKGS="postgresql-server postgresql-contrib rsync tar gettext bind-utils nss_wrapper" && \
+    yum -y module enable postgresql:15 && \
+    INSTALL_PKGS="rsync tar gettext bind-utils nss_wrapper postgresql-server postgresql-contrib" && \
+    INSTALL_PKGS="$INSTALL_PKGS pgaudit" && \
     yum -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
-    yum -y update tzdata && \
-    yum -y reinstall tzdata && \
+    postgres -V | grep -qe "$POSTGRESQL_VERSION\." && echo "Found VERSION $POSTGRESQL_VERSION" && \
+    (yum -y reinstall tzdata || yum -y update tzdata ) && \
     yum -y clean all --enablerepo='*' && \
     localedef -f UTF-8 -i en_US en_US.UTF-8 && \
     chmod -R g+w /etc/pki/tls && \
@@ -83,8 +84,8 @@ RUN ARCH=$(uname -m) && \
 ENV CONTAINER_SCRIPTS_PATH=/usr/share/container-scripts/postgresql \
     ENABLED_COLLECTIONS=
 
-COPY --from=postgresql_container_source /postgresql-container/13/root /
-COPY --from=postgresql_container_source /postgresql-container/13/s2i/bin/ $STI_SCRIPTS_PATH
+COPY --from=postgresql_container_source /postgresql-container/15/root /
+COPY --from=postgresql_container_source /postgresql-container/15/s2i/bin/ $STI_SCRIPTS_PATH
 
 # Not using VOLUME statement since it's not working in OpenShift Online:
 # https://github.com/sclorg/httpd-container/issues/30

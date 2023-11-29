@@ -30,12 +30,12 @@ docker run -p 5432:5432 \
   -e POSTGRESQL_USER=root \
   -e POSTGRESQL_PASSWORD=smartvm \
   -e POSTGRESQL_DATABASE=vmdb_production \
-  docker.io/manageiq/postgresql:13
+  docker.io/manageiq/postgresql:15
 ```
 
 ## License
 
 This project is available as open source under the terms of the [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0).
 
-This project contains a copy of the [upstream sclorg/postgresql-container image](https://github.com/sclorg/postgresql-container/blob/642cde251f7f9518b3765b0ff56ef0d5f807e8af/13/Dockerfile.rhel9),
+This project contains a copy of the [upstream sclorg/postgresql-container image](https://github.com/sclorg/postgresql-container/blob/261c358cc3c6baa2884270fe695024ae8cd90f8d/15/Dockerfile.rhel8),
 which was then modified for multi-arch support. That original source is licensed under the terms of the Apache 2.0 License.
