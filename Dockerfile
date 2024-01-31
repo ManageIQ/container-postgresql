@@ -60,7 +60,19 @@ COPY --from=postgresql_container_source /postgresql-container/13/root/usr/libexe
 # This image must forever use UID 26 for postgres user so our volumes are
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
-RUN { yum -y module enable postgresql:13 || :; } && \
+RUN (dnf info postgresql-server); \
+    if [ $? == 1 ]; then \
+      ARCH=$(uname -m) && \
+      dnf -y --setopt=protected_packages= remove redhat-release && \
+      dnf -y remove *subscription-manager* && \
+      dnf -y install \
+        http://mirror.stream.centos.org/9-stream/BaseOS/${ARCH}/os/Packages/centos-stream-release-9.0-24.el9.noarch.rpm \
+        http://mirror.stream.centos.org/9-stream/BaseOS/${ARCH}/os/Packages/centos-stream-repos-9.0-24.el9.noarch.rpm \
+        http://mirror.stream.centos.org/9-stream/BaseOS/${ARCH}/os/Packages/centos-gpg-keys-9.0-24.el9.noarch.rpm && \
+      dnf clean all && \
+      rm -rf /var/cache/dnf; \
+    fi && \
+    { yum -y module enable postgresql:13 || :; } && \
     INSTALL_PKGS="rsync tar gettext bind-utils nss_wrapper postgresql-server postgresql-contrib" && \
     INSTALL_PKGS="$INSTALL_PKGS pgaudit" && \
     yum -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \
