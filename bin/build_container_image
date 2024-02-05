@@ -11,9 +11,12 @@ docker build . -t localhost/build:latest
 VERSION=$(docker run --rm --entrypoint bash localhost/build:latest -c "rpm -q --queryformat '%{VERSION}\n' postgresql")
 IFS=. read major minor _patch <<< ${VERSION}
 
+RELEASEVER=$(docker run --rm --entrypoint bash localhost/build:latest -c "rpm -q --queryformat '%{RELEASE}\n' postgresql")
+IFS=. read _package_release os_release <<< ${RELEASEVER}
+
 set -v
-docker tag localhost/build:latest $IMAGE_NAME:$major
-docker tag localhost/build:latest $IMAGE_NAME:$major.$minor
+docker tag localhost/build:latest $IMAGE_NAME:$major-$os_release
+docker tag localhost/build:latest $IMAGE_NAME:$major.$minor-$os_release
 set +v
 
 docker images
