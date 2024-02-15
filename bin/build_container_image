@@ -25,7 +25,7 @@ docker images
 
 echo "$REGISTRY_PASSWORD" | docker login $REGISTRY -u $REGISTRY_USERNAME --password-stdin
 
-docker push $IMAGE_NAME:$major
-docker push $IMAGE_NAME:$major.$minor
+docker push $IMAGE_NAME:$major-$os_release
+docker push $IMAGE_NAME:$major.$minor-$os_release
 
 set +e
