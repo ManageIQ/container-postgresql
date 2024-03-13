@@ -74,7 +74,6 @@ RUN (dnf info postgresql-server); \
     fi && \
     { yum -y module enable postgresql:13 || :; } && \
     INSTALL_PKGS="rsync tar gettext bind-utils nss_wrapper postgresql-server postgresql-contrib" && \
-    INSTALL_PKGS="$INSTALL_PKGS pgaudit" && \
     yum -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
     postgres -V | grep -qe "$POSTGRESQL_VERSION\." && echo "Found VERSION $POSTGRESQL_VERSION" && \
