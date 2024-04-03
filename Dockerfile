@@ -60,7 +60,8 @@ COPY --from=postgresql_container_source /postgresql-container/13/root/usr/libexe
 # This image must forever use UID 26 for postgres user so our volumes are
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
-RUN (dnf info postgresql-server); \
+RUN dnf -y --disableplugin=subscription-manager --setopt=tsflags=nodocs update && \
+    (dnf info postgresql-server); \
     if [ $? == 1 ]; then \
       ARCH=$(uname -m) && \
       dnf -y --setopt=protected_packages= remove redhat-release && \
