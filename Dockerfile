@@ -12,7 +12,9 @@ RUN cd /tmp && \
 FROM registry.access.redhat.com/ubi8/ubi-minimal:latest AS postgresql_container_source
 
 RUN microdnf -y --setopt=tsflags=nodocs install git
-RUN git clone --depth 1 https://github.com/sclorg/postgresql-container /postgresql-container
+RUN git clone https://github.com/sclorg/postgresql-container /postgresql-container && \
+    cd /postgresql-container && \
+    git checkout b455357a2e281bb224c547dbf948cc8745937181
 
 ################################################################################
 
