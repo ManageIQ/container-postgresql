@@ -84,7 +84,8 @@ RUN dnf -y --disableplugin=subscription-manager --setopt=tsflags=nodocs update &
     chmod -R g+w /etc/pki/tls && \
     test "$(id postgres)" = "uid=26(postgres) gid=26(postgres) groups=26(postgres)" && \
     mkdir -p /var/lib/pgsql/data && \
-    /usr/libexec/fix-permissions /var/lib/pgsql /var/run/postgresql
+    mkdir -p /run/postgresql && \
+    /usr/libexec/fix-permissions /var/lib/pgsql /run/postgresql
 
 # Get prefix path and path to scripts rather than hard-code them in scripts
 ENV CONTAINER_SCRIPTS_PATH=/usr/share/container-scripts/postgresql \
