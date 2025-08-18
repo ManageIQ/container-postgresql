@@ -1,18 +1,18 @@
+---
 name: CI
-
 on:
   push:
   pull_request:
   schedule:
-  - cron: '0 0 * * 0'
-
+  - cron: 0 0 * * 0
 jobs:
   ci:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - name: Set up registry credentials
-      if: ${{ github.ref == 'refs/heads/master' && github.repository_owner == 'ManageIQ' }}
+      if: "${{ github.ref == 'refs/heads/master' && github.repository_owner == 'ManageIQ'
+        }}"
       run: |
         echo "REGISTRY_USERNAME=${{ secrets.REGISTRY_USERNAME }}" >> $GITHUB_ENV
         echo "REGISTRY_PASSWORD=${{ secrets.REGISTRY_PASSWORD }}" >> $GITHUB_ENV
