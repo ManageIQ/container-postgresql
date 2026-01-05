@@ -67,9 +67,9 @@ RUN dnf -y --disableplugin=subscription-manager --setopt=tsflags=nodocs update &
       dnf -y --setopt=protected_packages= remove redhat-release && \
       dnf -y remove *subscription-manager* && \
       dnf -y install \
-        http://mirror.stream.centos.org/9-stream/BaseOS/${ARCH}/os/Packages/centos-stream-release-9.0-24.el9.noarch.rpm \
-        http://mirror.stream.centos.org/9-stream/BaseOS/${ARCH}/os/Packages/centos-stream-repos-9.0-24.el9.noarch.rpm \
-        http://mirror.stream.centos.org/9-stream/BaseOS/${ARCH}/os/Packages/centos-gpg-keys-9.0-24.el9.noarch.rpm && \
+        http://mirror.stream.centos.org/9-stream/BaseOS/${ARCH}/os/Packages/centos-stream-release-9.0-34.el9.noarch.rpm \
+        http://mirror.stream.centos.org/9-stream/BaseOS/${ARCH}/os/Packages/centos-stream-repos-9.0-34.el9.noarch.rpm \
+        http://mirror.stream.centos.org/9-stream/BaseOS/${ARCH}/os/Packages/centos-gpg-keys-9.0-34.el9.noarch.rpm && \
       dnf clean all && \
       rm -rf /var/cache/dnf; \
     fi && \
