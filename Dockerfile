@@ -16,7 +16,7 @@ RUN git clone --depth 1 https://github.com/sclorg/postgresql-container /postgres
 
 ################################################################################
 
-FROM registry.access.redhat.com/ubi9/s2i-core AS base
+FROM registry.access.redhat.com/ubi10/s2i-core AS base
 
 # PostgreSQL image for OpenShift.
 # Volumes:
@@ -28,8 +28,8 @@ FROM registry.access.redhat.com/ubi9/s2i-core AS base
 #  * $POSTGRESQL_ADMIN_PASSWORD (Optional) - Password for the 'postgres'
 #                           PostgreSQL administrative account
 
-ENV POSTGRESQL_VERSION=13 \
-    POSTGRESQL_PREV_VERSION=12 \
+ENV POSTGRESQL_VERSION=16 \
+    POSTGRESQL_PREV_VERSION=15 \
     HOME=/var/lib/pgsql \
     PGUSER=postgres \
     APP_DATA=/opt/app-root
@@ -42,20 +42,19 @@ create, run, maintain and access a PostgreSQL DBMS server."
 LABEL summary="$SUMMARY" \
       description="$DESCRIPTION" \
       io.k8s.description="$DESCRIPTION" \
-      io.k8s.display-name="PostgreSQL 13" \
+      io.k8s.display-name="PostgreSQL 16" \
       io.openshift.expose-services="5432:postgresql" \
-      io.openshift.tags="database,postgresql,postgresql13,postgresql-13" \
+      io.openshift.tags="database,postgresql,postgresql16,postgresql-16" \
       io.openshift.s2i.assemble-user="26" \
-      name="rhel9/postgresql-13" \
-      com.redhat.component="postgresql-13-container" \
-      version="1" \
+      name="rhel10/postgresql-16" \
+      com.redhat.component="postgresql-16-container" \
       com.redhat.license_terms="https://www.redhat.com/en/about/red-hat-end-user-license-agreements#rhel" \
-      usage="podman run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 rhel9/postgresql-13" \
+      usage="podman run -d --name postgresql_database -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=pass -e POSTGRESQL_DATABASE=db -p 5432:5432 rhel10/postgresql-16" \
       maintainer="SoftwareCollections.org <sclorg@redhat.com>"
 
 EXPOSE 5432
 
-COPY --from=postgresql_container_source /postgresql-container/13/root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
+COPY --from=postgresql_container_source /postgresql-container/16/root/usr/libexec/fix-permissions /usr/libexec/fix-permissions
 
 # This image must forever use UID 26 for postgres user so our volumes are
 # safe in the future. This should *never* change, the last test is there
@@ -64,22 +63,22 @@ RUN dnf -y --disableplugin=subscription-manager --setopt=tsflags=nodocs update &
     (dnf info postgresql-server); \
     if [ $? == 1 ]; then \
       ARCH=$(uname -m) && \
+      sed -i "s/enabled=1/enabled=0/g" /etc/dnf/plugins/subscription-manager.conf && \
       dnf -y --setopt=protected_packages= remove redhat-release && \
-      dnf -y remove *subscription-manager* && \
-      dnf -y install \
-        http://mirror.stream.centos.org/9-stream/BaseOS/${ARCH}/os/Packages/centos-stream-release-9.0-34.el9.noarch.rpm \
-        http://mirror.stream.centos.org/9-stream/BaseOS/${ARCH}/os/Packages/centos-stream-repos-9.0-34.el9.noarch.rpm \
-        http://mirror.stream.centos.org/9-stream/BaseOS/${ARCH}/os/Packages/centos-gpg-keys-9.0-34.el9.noarch.rpm && \
+      dnf -y install --releasever 10 \
+        http://mirror.stream.centos.org/10-stream/BaseOS/${ARCH}/os/Packages/centos-stream-release-10.0-20.el10.noarch.rpm \
+        http://mirror.stream.centos.org/10-stream/BaseOS/${ARCH}/os/Packages/centos-stream-repos-10.0-20.el10.noarch.rpm \
+        http://mirror.stream.centos.org/10-stream/BaseOS/${ARCH}/os/Packages/centos-gpg-keys-10.0-20.el10.noarch.rpm && \
       dnf clean all && \
       rm -rf /var/cache/dnf; \
     fi && \
-    { yum -y module enable postgresql:13 || :; } && \
-    INSTALL_PKGS="rsync tar gettext bind-utils nss_wrapper postgresql-server postgresql-contrib" && \
-    yum -y --setopt=tsflags=nodocs install $INSTALL_PKGS && \
+    INSTALL_PKGS="rsync tar gettext-envsubst nss_wrapper-libs glibc-locale-source xz" && \
+    PSQL_PKGS="postgresql16-server postgresql16-contrib postgresql16-upgrade postgresql16-pgvector pgaudit" && \
+    dnf -y --setopt=tsflags=nodocs install $INSTALL_PKGS $PSQL_PKGS && \
     rpm -V $INSTALL_PKGS && \
     postgres -V | grep -qe "$POSTGRESQL_VERSION\." && echo "Found VERSION $POSTGRESQL_VERSION" && \
-    (yum -y reinstall tzdata || yum -y update tzdata ) && \
-    yum -y clean all --enablerepo='*' && \
+    (dnf -y reinstall tzdata || dnf -y update tzdata ) && \
+    dnf -y clean all --enablerepo='*' && \
     localedef -f UTF-8 -i en_US en_US.UTF-8 && \
     chmod -R g+w /etc/pki/tls && \
     test "$(id postgres)" = "uid=26(postgres) gid=26(postgres) groups=26(postgres)" && \
@@ -91,8 +90,8 @@ RUN dnf -y --disableplugin=subscription-manager --setopt=tsflags=nodocs update &
 ENV CONTAINER_SCRIPTS_PATH=/usr/share/container-scripts/postgresql \
     ENABLED_COLLECTIONS=
 
-COPY --from=postgresql_container_source /postgresql-container/13/root /
-COPY --from=postgresql_container_source /postgresql-container/13/s2i/bin/ $STI_SCRIPTS_PATH
+COPY --from=postgresql_container_source /postgresql-container/16/root /
+COPY --from=postgresql_container_source /postgresql-container/16/s2i/bin/ $STI_SCRIPTS_PATH
 
 # Not using VOLUME statement since it's not working in OpenShift Online:
 # https://github.com/sclorg/httpd-container/issues/30
@@ -131,8 +130,8 @@ LABEL name="PostgreSQL" \
 # Switch USER to root to add required repo and packages
 USER root
 
-RUN yum -y update postgresql-* && \
-    yum clean all
+RUN dnf -y update postgresql-* && \
+    dnf clean all
 
 ADD container-assets/container-scripts /opt/manageiq/container-scripts/
 ADD container-assets/miq-run-postgresql /usr/bin/
