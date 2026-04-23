@@ -59,18 +59,11 @@ COPY --from=postgresql_container_source /postgresql-container/16/root/usr/libexe
 # This image must forever use UID 26 for postgres user so our volumes are
 # safe in the future. This should *never* change, the last test is there
 # to make sure of that.
-RUN dnf -y --disableplugin=subscription-manager --setopt=tsflags=nodocs update && \
+RUN --mount=type=bind,from=quay.io/manageiq/build_tools:el10,source=/tools,target=/usr/local/bin \
+    dnf -y --disableplugin=subscription-manager --setopt=tsflags=nodocs update && \
     (dnf info postgresql-server); \
     if [ $? == 1 ]; then \
-      ARCH=$(uname -m) && \
-      sed -i "s/enabled=1/enabled=0/g" /etc/dnf/plugins/subscription-manager.conf && \
-      dnf -y --setopt=protected_packages= remove redhat-release && \
-      dnf -y install --releasever 10 \
-        http://mirror.stream.centos.org/10-stream/BaseOS/${ARCH}/os/Packages/centos-stream-release-10.0-20.el10.noarch.rpm \
-        http://mirror.stream.centos.org/10-stream/BaseOS/${ARCH}/os/Packages/centos-stream-repos-10.0-20.el10.noarch.rpm \
-        http://mirror.stream.centos.org/10-stream/BaseOS/${ARCH}/os/Packages/centos-gpg-keys-10.0-20.el10.noarch.rpm && \
-      dnf clean all && \
-      rm -rf /var/cache/dnf; \
+      ubi_2_stream_10; \
     fi && \
     INSTALL_PKGS="rsync tar gettext-envsubst nss_wrapper-libs glibc-locale-source xz" && \
     PSQL_PKGS="postgresql16-server postgresql16-contrib postgresql16-upgrade postgresql16-pgvector pgaudit" && \
@@ -78,7 +71,7 @@ RUN dnf -y --disableplugin=subscription-manager --setopt=tsflags=nodocs update &
     rpm -V $INSTALL_PKGS && \
     postgres -V | grep -qe "$POSTGRESQL_VERSION\." && echo "Found VERSION $POSTGRESQL_VERSION" && \
     (dnf -y reinstall tzdata || dnf -y update tzdata ) && \
-    dnf -y clean all --enablerepo='*' && \
+    clean_dnf_rpm && \
     localedef -f UTF-8 -i en_US en_US.UTF-8 && \
     chmod -R g+w /etc/pki/tls && \
     test "$(id postgres)" = "uid=26(postgres) gid=26(postgres) groups=26(postgres)" && \
@@ -130,8 +123,9 @@ LABEL name="PostgreSQL" \
 # Switch USER to root to add required repo and packages
 USER root
 
-RUN dnf -y update postgresql-* && \
-    dnf clean all
+RUN --mount=type=bind,from=quay.io/manageiq/build_tools:el10,source=/tools,target=/usr/local/bin \
+    dnf -y update postgresql-* && \
+    clean_dnf_rpm
 
 ADD container-assets/container-scripts /opt/manageiq/container-scripts/
 ADD container-assets/miq-run-postgresql /usr/bin/
