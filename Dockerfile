@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi10/ubi-minimal:10.2 AS manifest
+FROM registry.access.redhat.com/ubi9/ubi-minimal:latest AS manifest
 
 COPY .git /tmp/.git
 
@@ -9,7 +9,7 @@ RUN cd /tmp && \
 
 ################################################################################
 
-FROM registry.access.redhat.com/ubi10/ubi-minimal:10.2 AS postgresql_container_source
+FROM registry.access.redhat.com/ubi9/ubi-minimal:latest AS postgresql_container_source
 
 RUN microdnf -y --setopt=tsflags=nodocs install git
 RUN git clone --depth 1 https://github.com/sclorg/postgresql-container /postgresql-container
