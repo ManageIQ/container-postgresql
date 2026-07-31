@@ -30,7 +30,7 @@ docker run -p 5432:5432 \
   -e POSTGRESQL_USER=root \
   -e POSTGRESQL_PASSWORD=smartvm \
   -e POSTGRESQL_DATABASE=vmdb_production \
-  docker.io/manageiq/postgresql:13
+  docker.io/manageiq/postgresql:16-el10
 ```
 
 ## License
